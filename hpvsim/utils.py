@@ -648,7 +648,7 @@ def n_binomial(prob, n, min_var=min_var):
     return out
 
 
-def binomial_filter(prob, arr): # No speed gain from Numba
+def binomial_filter(prob, arr, min_var=min_var): # No speed gain from Numba
     '''
     Binomial "filter" -- the same as n_binomial, except return
     the elements of arr that succeeded.
@@ -664,10 +664,13 @@ def binomial_filter(prob, arr): # No speed gain from Numba
 
         inds = hpv.binomial_filter(0.5, np.arange(20)**2) # Return which values out of the (arbitrary) array passed the coin flip
     '''
-    return arr[(np.random.random(len(arr)) < prob).nonzero()[0]]
+    success = n_binomial(prob, len(arr), min_var=min_var)
+    inds = success.nonzero()[0]
+    out = arr[inds]
+    return out
 
 
-def binomial_arr(prob_arr):
+def binomial_arr(prob_arr, min_var=min_var):
     '''
     Binomial (Bernoulli) trials each with different probabilities.
 
@@ -681,7 +684,15 @@ def binomial_arr(prob_arr):
 
         outcomes = hpv.binomial_arr([0.1, 0.1, 0.2, 0.2, 0.8, 0.8]) # Perform 6 trials with different probabilities
     '''
-    return np.random.random(len(prob_arr)) < prob_arr
+    if min_var:
+        out = np.zeros(len(prob_arr), dtype=bool)
+        n = randround(prob_arr.sum())
+        if n > 0:
+            inds = numba_choice(prob_arr, n)
+            out[inds] = True
+    else:
+        out = np.random.random(len(prob_arr)) < prob_arr
+    return out
 
 
 def n_multinomial(probs, n): # No speed gain from Numba
