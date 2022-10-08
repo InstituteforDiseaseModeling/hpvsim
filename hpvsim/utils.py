@@ -132,10 +132,10 @@ def compute_infections(betas,          targets, min_var=min_var):
     Compute who infects whom
     '''
     # Determine transmissions
-    if 0:#min_var:
-        n = randround(betas.sum())
-        if n > 0:
-            transmissions = numba_choice(betas, n)
+    if min_var:
+        k = randround(betas.sum())
+        if k > 0:
+            transmissions = nb_choice(len(betas), k, weights=betas)
         else:
             transmissions = np.full(0, 0, dtype=np.int64)
     else:
@@ -637,10 +637,12 @@ def n_binomial(prob, n, min_var=min_var):
         outcomes = hpv.n_binomial(0.5, 100) # Perform 100 coin-flips
     '''
     if min_var:
-        success = randround(prob*n)
+        k = randround(prob*n)
         out = np.zeros(n, dtype=bool)
-        if success > 0:
-            inds = np.random.choice(n, success)
+        if k > 0:
+            inds = nb_choice(max_n=n, k=k)
+            if len(inds) != len(np.unique(inds)):
+                import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
             out[inds] = True
     else:
         out = np.random.random(n) < prob
@@ -684,11 +686,12 @@ def binomial_arr(prob_arr, min_var=min_var):
 
         outcomes = hpv.binomial_arr([0.1, 0.1, 0.2, 0.2, 0.8, 0.8]) # Perform 6 trials with different probabilities
     '''
-    if 0:#min_var:
-        out = np.zeros(len(prob_arr), dtype=bool)
-        n = randround(prob_arr.sum())
-        if n > 0:
-            inds = numba_choice(prob_arr, n)
+    if min_var:
+        max_n = len(prob_arr)
+        out = np.zeros(max_n, dtype=bool)
+        k = randround(prob_arr.sum())
+        if k > 0:
+            inds = nb_choice(max_n, k=k, weights=np.array(prob_arr, dtype=hpd.default_float))
             out[inds] = True
     else:
         out = np.random.random(len(prob_arr)) < prob_arr
@@ -821,33 +824,116 @@ def choose_w(probs, n, unique=True): # No performance gain from Numba
     return np.random.choice(n_choices, n_samples, p=probs, replace=not(unique))
 
 
+
 @nb.njit
-def numba_choice(weights, k):
+def nb_choice(max_n, k=1, weights=None, replace=False):
     '''
-    From https://stackoverflow.com/questions/64135020/speed-up-random-weighted-choice-without-replacement-in-python
+    Choose k samples from max_n values, with optional weights and replacement.
+    
+    Args:
+        max_n (int): the maximum index to choose
+        k (int): number of samples
+        weights (array): weight of each index, if not uniform
+        replace (bool): whether to sample with replacement
     '''
     # Get cumulative weights
-    wc = np.cumsum(weights)
-    # Total of weights
-    m = wc[-1]
-    # Arrays of sample and sampled indices
-    sample_idx = np.full(k, -1, dtype=np.int64)
-    # Sampling loop
+    if weights is None:
+        weights = np.full(int(max_n), 1.0, dtype=nbfloat)
+    cumweights = np.cumsum(weights)
+    
+    maxweight = cumweights[-1] # Total of weights
+    inds = np.full(k, -1, dtype=np.int64) # Arrays of sample and sampled indices
+        
+    # Sample
     i = 0
     while i < k:
-        # Pick random weight value
-        r = m * np.random.rand()
-        # Get corresponding index
-        idx = np.searchsorted(wc, r, side='right')
-        # Check index was not selected before
-        # If not using Numba you can just do `np.isin(idx, sample_idx)`
-        for j in range(i):
-            if sample_idx[j] == idx:
-                continue
-        # Save sampled value and index
-        sample_idx[i] = idx
-        i += 1
-    return sample_idx
+        
+        # Find the index
+        r = maxweight * np.random.rand() # Pick random weight value
+        ind = np.searchsorted(cumweights, r, side='right') # Get corresponding index
+        
+        # Optionally sample without replacement
+        found = False
+        if not replace:
+            for j in range(i):
+                if inds[j] == ind:
+                    found = True
+                    continue
+        if not found:
+            inds[i] = ind
+            i += 1
+
+    return inds
+
+
+
+# @nb.njit
+# def numba_choice(weights, k):
+#     '''
+#     From https://stackoverflow.com/questions/64135020/speed-up-random-weighted-choice-without-replacement-in-python
+#     '''
+#     # Get cumulative weights
+#     wc = np.cumsum(weights)
+#     # Total of weights
+#     m = wc[-1]
+#     # Arrays of sample and sampled indices
+#     sample_idx = np.full(k, -1, dtype=np.int64)
+#     # Sampling loop
+#     i = 0
+#     while i < k:
+#         # Pick random weight value
+#         r = m * np.random.rand()
+#         # Get corresponding index
+#         idx = np.searchsorted(wc, r, side='right')
+#         # Check index was not selected before
+#         # If not using Numba you can just do `np.isin(idx, sample_idx)`
+#         found = False
+#         for j in range(i):
+#             if sample_idx[j] == idx:
+#                 found = True
+#                 continue
+#         # Save sampled value and index
+#         if not found:
+#             sample_idx[i] = idx
+#             i += 1
+#     return sample_idx
+
+
+
+
+
+
+# @nb.njit
+# def numba_choice2(max_n, k):
+#     '''
+#     From https://stackoverflow.com/questions/64135020/speed-up-random-weighted-choice-without-replacement-in-python
+#     '''
+#     # Get cumulative weights
+#     wc = np.cumsum(np.ones(max_n))
+#     # Total of weights
+#     m = wc[-1]
+#     # Arrays of sample and sampled indices
+#     sample_idx = np.full(k, -1, dtype=np.int64)
+#     # Sampling loop
+#     i = 0
+#     while i < k:
+#         # Pick random weight value
+#         r = m * np.random.rand()
+#         # Get corresponding index
+#         idx = np.searchsorted(wc, r, side='right')
+#         # Check index was not selected before
+#         # If not using Numba you can just do `np.isin(idx, sample_idx)`
+#         found = False
+#         for j in range(i): # CK: could do this loop only at the end
+#             if sample_idx[j] == idx:
+#                 found = True
+#                 continue
+#         # Save sampled value and index
+#         if not found:
+#             sample_idx[i] = idx
+#             i += 1
+        
+#     return sample_idx
 
 
 #%% Simple array operations

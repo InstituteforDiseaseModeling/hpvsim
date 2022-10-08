@@ -11,13 +11,15 @@ base_pars = dict(
     verbose = -1,
 )
 
-offset = 1
 p = sc.objdict(
     minvars = [0, 1],
     popsizes = [10e3, 40e3],
-    repeats = 20,
-    trials = 4,
+    repeats = 100,
+    trials = 1,
 )
+
+offset = 1
+randval = np.random.randint(1e5)
 
 T = sc.timer()
 
@@ -30,13 +32,14 @@ for minvar in p.minvars:
         for popsize in p.popsizes:
             label = f'minvar{minvar}_popsize{popsize}_trial{trial}'
             for r in range(p.repeats):
-                pars = dict(n_agents=popsize, rand_seed=r+offset*np.random.randint(1e5))
+                pars = dict(n_agents=popsize, rand_seed=r+offset*randval)
                 sim = hpv.Sim(**base_pars, **pars, label=f'{label}_r{r}')
                 sim.info = sc.objdict(minvar=minvar, trial=trial, **pars)
                 sims.append(sim)
     msim = hpv.MultiSim(sims)
     msim.run()
     allsims += msim.sims
+    T.tt()
 
 d = []
 for sim in allsims:
