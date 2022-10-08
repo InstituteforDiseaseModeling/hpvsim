@@ -203,6 +203,9 @@ class Options(sc.objdict):
 
         optdesc.numba_cache = 'Set Numba caching -- saves on compilation time; disabling is not recommended'
         options.numba_cache = bool(int(os.getenv('HPVSIM_NUMBA_CACHE', 1)))
+        
+        optdesc.min_var = 'Minimize variance in random number selections'
+        options.min_var = bool(int(os.getenv('HPVSIM_MIN_VAR', 0)))
 
         return optdesc, options
 

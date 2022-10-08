@@ -59,6 +59,7 @@ def pair_lookup(contacts_array, people_inds, n):
     res_val = lookup[contacts_array]
     return res_val
 
+
 @nb.njit(cache=cache, parallel=safe_parallel)
 def unique(arr):
     '''
