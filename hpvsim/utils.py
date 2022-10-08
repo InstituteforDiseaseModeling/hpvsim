@@ -121,9 +121,13 @@ def get_discordant_pairs2(p1_inf_inds,  p2_sus_inds,    p1,       p2,       n):
 
 
 @nb.njit(cache=cache)
-def randround(x):
+def randround(x, threshold=1):
     ''' Reimplementation of Sciris' sc.randround() for maximum speed '''
-    return int(np.floor(x+np.random.random()))
+    if x>threshold:
+        out = int(np.round(x))
+    else:
+        out = int(np.floor(x+np.random.random()))
+    return out
 
 
 @nb.njit(cache=cache, parallel=safe_parallel)
