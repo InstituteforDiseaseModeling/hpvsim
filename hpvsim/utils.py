@@ -29,6 +29,7 @@ if hpo.numba_parallel not in [0, 1, 2, '0', '1', '2', 'none', 'safe', 'full']:
     errormsg = f'Numba parallel must be "none", "safe", or "full", not "{hpo.numba_parallel}"'
     raise ValueError(errormsg)
 cache = hpo.numba_cache # Turning this off can help switching parallelization options
+opt = dict(min_var=hpo.min_var) # Turning this on reduces variance
 
 
 #%% The core functions
@@ -117,14 +118,25 @@ def get_discordant_pairs2(p1_inf_inds,  p2_sus_inds,    p1,       p2,       n):
     return p1_source_inds
 
 
+
+@nb.njit((nb.float32,), cache=cache)
+def randround(x):
+    ''' Reimplementation of Sciris' sc.randround() for maximum speed '''
+    return int(np.floor(x+np.random.random()))
+
+
 @nb.njit(             (nb.float32[:],  nbint[:]), cache=cache, parallel=safe_parallel)
-def compute_infections(betas,       targets):
+def compute_infections(betas,          targets):
     '''
     Compute who infects whom
     '''
     # Determine transmissions
-    transmissions   = (np.random.random(len(betas)) < betas).nonzero()[0] # Apply probabilities to determine partnerships in which transmission occurred
-    target_inds     = targets[transmissions] # Extract indices of those who got infected
+    if opt['min_var']:
+        n = 0#randround(betas.sum())
+        transmissions = choose_w(betas, n, unique=True)
+    else:
+        transmissions = (np.random.random(len(betas)) < betas).nonzero()[0] # Apply probabilities to determine partnerships in which transmission occurred
+    target_inds = targets[transmissions] # Extract indices of those who got infected
     return target_inds
 
 

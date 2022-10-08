@@ -566,10 +566,10 @@ def reload_numba():
     '''
     print('Reloading hpvsim so changes take effect...')
     import importlib
-    import hpvsim as hp
-    importlib.reload(hp.defaults)
-    importlib.reload(hp.utils)
-    importlib.reload(hp)
+    import hpvsim as hpv
+    importlib.reload(hpv.defaults)
+    importlib.reload(hpv.utils)
+    importlib.reload(hpv)
     print("Reload complete. Note: for some options to take effect, you may also need to delete hpvsim's __pycache__ folder.")
     return
 

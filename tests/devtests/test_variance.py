@@ -12,15 +12,18 @@ base_pars = dict(
 
 offset = 0
 p = sc.objdict(
-    repeats = 10,
+    minvars = [0, 1],
     popsizes = [10e3, 40e3],
-    minvars = [0],
+    repeats = 10,
 )
 
 T = sc.timer()
 
-sims = []
+allsims = []
 for minvar in p.minvars:
+    sc.heading(f'Running minvar={minvar}')
+    hpv.options(min_var=minvar)
+    sims = []
     for popsize in p.popsizes:
         label = f'minvar{minvar}_popsize{popsize}'
         for r in range(p.repeats):
@@ -28,12 +31,12 @@ for minvar in p.minvars:
             sim = hpv.Sim(**base_pars, **pars, label=f'{label}_r{r}')
             sim.info = sc.objdict(minvar=minvar, **pars)
             sims.append(sim)
-
-msim = hpv.MultiSim(sims)
-msim.run()
+    msim = hpv.MultiSim(sims)
+    msim.run()
+    allsims += msim.sims
 
 d = []
-for sim in msim.sims:
+for sim in allsims:
     s = sim.summary
     row = sc.mergedicts(sim.info, cancer=s.total_cancers, inci=s.total_infections)
     d.append(row)
