@@ -23,6 +23,12 @@ randval = np.random.randint(1e5)
 
 T = sc.timer()
 
+ppl = dict()
+for popsize in p.popsizes:
+    sim = hpv.Sim(**base_pars, n_agents=popsize)
+    sim.initialize()
+    ppl[popsize] = sim.people
+
 allsims = []
 for minvar in p.minvars:
     sc.heading(f'Running minvar={minvar}')
@@ -34,6 +40,7 @@ for minvar in p.minvars:
             for r in range(p.repeats):
                 pars = dict(n_agents=popsize, rand_seed=r+offset*(trial+1)*randval)
                 sim = hpv.Sim(**base_pars, **pars, label=f'{label}_r{r}')
+                sim.people = ppl[popsize]
                 sim.info = sc.objdict(minvar=minvar, trial=trial, **pars)
                 sims.append(sim)
     msim = hpv.MultiSim(sims)
