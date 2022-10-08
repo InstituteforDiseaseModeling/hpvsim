@@ -132,7 +132,7 @@ def compute_infections(betas,          targets, min_var=min_var):
     Compute who infects whom
     '''
     # Determine transmissions
-    if min_var:
+    if 0:#min_var:
         n = randround(betas.sum())
         if n > 0:
             transmissions = numba_choice(betas, n)
@@ -684,7 +684,7 @@ def binomial_arr(prob_arr, min_var=min_var):
 
         outcomes = hpv.binomial_arr([0.1, 0.1, 0.2, 0.2, 0.8, 0.8]) # Perform 6 trials with different probabilities
     '''
-    if min_var:
+    if 0:#min_var:
         out = np.zeros(len(prob_arr), dtype=bool)
         n = randround(prob_arr.sum())
         if n > 0:

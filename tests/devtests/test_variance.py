@@ -2,6 +2,7 @@
 Check impact on sim variance of population size and variance switch
 '''
 
+import numpy as np
 import sciris as sc
 import hpvsim as hpv
 
@@ -10,11 +11,12 @@ base_pars = dict(
     verbose = -1,
 )
 
-offset = 0
+offset = 1
 p = sc.objdict(
     minvars = [0, 1],
     popsizes = [10e3, 40e3],
     repeats = 20,
+    trials = 4,
 )
 
 T = sc.timer()
@@ -24,13 +26,14 @@ for minvar in p.minvars:
     sc.heading(f'Running minvar={minvar}')
     hpv.options(min_var=minvar)
     sims = []
-    for popsize in p.popsizes:
-        label = f'minvar{minvar}_popsize{popsize}'
-        for r in range(p.repeats):
-            pars = dict(n_agents=popsize, rand_seed=r+offset)
-            sim = hpv.Sim(**base_pars, **pars, label=f'{label}_r{r}')
-            sim.info = sc.objdict(minvar=minvar, **pars)
-            sims.append(sim)
+    for trial in range(p.trials):
+        for popsize in p.popsizes:
+            label = f'minvar{minvar}_popsize{popsize}_trial{trial}'
+            for r in range(p.repeats):
+                pars = dict(n_agents=popsize, rand_seed=r+offset*np.random.randint(1e5))
+                sim = hpv.Sim(**base_pars, **pars, label=f'{label}_r{r}')
+                sim.info = sc.objdict(minvar=minvar, trial=trial, **pars)
+                sims.append(sim)
     msim = hpv.MultiSim(sims)
     msim.run()
     allsims += msim.sims
@@ -43,7 +46,7 @@ for sim in allsims:
     
 df = sc.dataframe(d)
 
-g = df.groupby(by=['n_agents', 'minvar'])
+g = df.groupby(by=['n_agents', 'minvar', 'trial'])
 mean = g.mean()
 std = g.std()
 res = std/mean
