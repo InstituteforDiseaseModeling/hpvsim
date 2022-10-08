@@ -19,6 +19,7 @@ __all__ = []
 nbbool  = nb.bool_
 nbint   = hpd.nbint
 nbfloat = hpd.nbfloat
+nbom    = nb.types.misc.Omitted
 
 # Specify whether to allow parallel Numba calculation -- 10% faster for safe and 20% faster for random, but the random number stream becomes nondeterministic for the latter
 safe_opts = [1, '1', 'safe']
@@ -29,7 +30,7 @@ if hpo.numba_parallel not in [0, 1, 2, '0', '1', '2', 'none', 'safe', 'full']:
     errormsg = f'Numba parallel must be "none", "safe", or "full", not "{hpo.numba_parallel}"'
     raise ValueError(errormsg)
 cache = hpo.numba_cache # Turning this off can help switching parallelization options
-opt = dict(min_var=hpo.min_var) # Turning this on reduces variance
+min_var = hpo.min_var # Turning this on reduces variance
 
 
 #%% The core functions
@@ -125,19 +126,26 @@ def randround(x):
     return int(np.floor(x+np.random.random()))
 
 
-@nb.njit(             (nb.float32[:],  nbint[:]), cache=cache, parallel=safe_parallel)
-def compute_infections(betas,          targets):
+@nb.njit(             (nb.float32[:],  nbint[:], nbbool(nbom(min_var))), cache=cache, parallel=safe_parallel)
+def nb_compute_infections(betas,          targets,  min_var=min_var):
     '''
     Compute who infects whom
     '''
     # Determine transmissions
-    if opt['min_var']:
-        n = 0#randround(betas.sum())
-        transmissions = choose_w(betas, n, unique=True)
+    if min_var:
+        n = randround(betas.sum())
+        if n > 0:
+            transmissions = choose_w(betas, n, unique=True)
+        else:
+            transmissions = np.array([], dtype=np.int64)
     else:
         transmissions = (np.random.random(len(betas)) < betas).nonzero()[0] # Apply probabilities to determine partnerships in which transmission occurred
     target_inds = targets[transmissions] # Extract indices of those who got infected
     return target_inds
+
+
+# import functools as ft
+# compute_infections = ft.partial(nb_compute_infections, min_var=min_var)
 
 
 @nb.njit(          (nbfloat[:,:],   nbint,  nbint[:,:],  nbint[:],  nbfloat[:], nbfloat[:,:]), cache=cache)

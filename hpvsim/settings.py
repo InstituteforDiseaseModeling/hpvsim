@@ -286,7 +286,7 @@ class Options(sc.objdict):
                 if value in [None, 'default']:
                     value = self.orig_options[key]
                 self[key] = value
-                numba_keys = ['precision', 'numba_parallel', 'numba_cache'] # Specify which keys require a reload
+                numba_keys = ['precision', 'numba_parallel', 'numba_cache', 'min_var'] # Specify which keys require a reload
                 if key in numba_keys:
                     reload_required = True
                 if key in 'backend':
