@@ -136,9 +136,8 @@ def compute_infections(betas,          targets, min_var=min_var):
         n = randround(betas.sum())
         if n > 0:
             transmissions = numba_choice(betas, n)
-            # transmissions = np.array(transmissions, dtype=np.int32)
-        # else:
-        #     transmissions = np.array([], dtype=nbint)
+        else:
+            transmissions = np.full(0, 0, dtype=np.int64)
     else:
         transmissions = (np.random.random(len(betas)) < betas).nonzero()[0] # Apply probabilities to determine partnerships in which transmission occurred
     target_inds = targets[transmissions] # Extract indices of those who got infected
