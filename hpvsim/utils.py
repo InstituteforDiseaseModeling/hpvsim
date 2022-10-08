@@ -30,7 +30,7 @@ if hpo.numba_parallel not in [0, 1, 2, '0', '1', '2', 'none', 'safe', 'full']:
     errormsg = f'Numba parallel must be "none", "safe", or "full", not "{hpo.numba_parallel}"'
     raise ValueError(errormsg)
 cache = hpo.numba_cache # Turning this off can help switching parallelization options
-# min_var = hpo.min_var # Turning this on reduces variance
+min_var = hpo.min_var # Turning this on reduces variance
 
 
 #%% The core functions
@@ -127,19 +127,20 @@ def randround(x):
 
 
 @nb.njit(cache=cache, parallel=safe_parallel)
-def compute_infections(betas,          targets):
+def compute_infections(betas,          targets, min_var=min_var):
     '''
     Compute who infects whom
     '''
     # Determine transmissions
-    # if min_var:
-    #     n = randround(betas.sum())
-    #     if n > 0:
-    #         transmissions = choose_w(betas, n, unique=True)
-    #     else:
-    #         transmissions = np.array([], dtype=np.int64)
-    # else:
-    transmissions = (np.random.random(len(betas)) < betas).nonzero()[0] # Apply probabilities to determine partnerships in which transmission occurred
+    if min_var:
+        n = randround(betas.sum())
+        if n > 0:
+            transmissions = numba_choice(betas, n)
+            # transmissions = np.array(transmissions, dtype=np.int32)
+        # else:
+        #     transmissions = np.array([], dtype=nbint)
+    else:
+        transmissions = (np.random.random(len(betas)) < betas).nonzero()[0] # Apply probabilities to determine partnerships in which transmission occurred
     target_inds = targets[transmissions] # Extract indices of those who got infected
     return target_inds
 
@@ -800,6 +801,34 @@ def choose_w(probs, n, unique=True): # No performance gain from Numba
         probs = np.ones(n_choices)/n_choices
     return np.random.choice(n_choices, n_samples, p=probs, replace=not(unique))
 
+
+@nb.njit
+def numba_choice(weights, k):
+    '''
+    From https://stackoverflow.com/questions/64135020/speed-up-random-weighted-choice-without-replacement-in-python
+    '''
+    # Get cumulative weights
+    wc = np.cumsum(weights)
+    # Total of weights
+    m = wc[-1]
+    # Arrays of sample and sampled indices
+    sample_idx = np.full(k, -1, dtype=np.int64)
+    # Sampling loop
+    i = 0
+    while i < k:
+        # Pick random weight value
+        r = m * np.random.rand()
+        # Get corresponding index
+        idx = np.searchsorted(wc, r, side='right')
+        # Check index was not selected before
+        # If not using Numba you can just do `np.isin(idx, sample_idx)`
+        for j in range(i):
+            if sample_idx[j] == idx:
+                continue
+        # Save sampled value and index
+        sample_idx[i] = idx
+        i += 1
+    return sample_idx
 
 
 #%% Simple array operations
