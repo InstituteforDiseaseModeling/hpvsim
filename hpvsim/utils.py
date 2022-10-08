@@ -132,7 +132,7 @@ def compute_infections(betas,          targets, min_var=min_var):
     Compute who infects whom
     '''
     # Determine transmissions
-    if min_var:
+    if 0:#min_var:
         k = randround(betas.sum())
         if k > 0:
             transmissions = nb_choice(len(betas), k, weights=betas)
@@ -865,75 +865,6 @@ def nb_choice(max_n, k=1, weights=None, replace=False):
 
     return inds
 
-
-
-# @nb.njit
-# def numba_choice(weights, k):
-#     '''
-#     From https://stackoverflow.com/questions/64135020/speed-up-random-weighted-choice-without-replacement-in-python
-#     '''
-#     # Get cumulative weights
-#     wc = np.cumsum(weights)
-#     # Total of weights
-#     m = wc[-1]
-#     # Arrays of sample and sampled indices
-#     sample_idx = np.full(k, -1, dtype=np.int64)
-#     # Sampling loop
-#     i = 0
-#     while i < k:
-#         # Pick random weight value
-#         r = m * np.random.rand()
-#         # Get corresponding index
-#         idx = np.searchsorted(wc, r, side='right')
-#         # Check index was not selected before
-#         # If not using Numba you can just do `np.isin(idx, sample_idx)`
-#         found = False
-#         for j in range(i):
-#             if sample_idx[j] == idx:
-#                 found = True
-#                 continue
-#         # Save sampled value and index
-#         if not found:
-#             sample_idx[i] = idx
-#             i += 1
-#     return sample_idx
-
-
-
-
-
-
-# @nb.njit
-# def numba_choice2(max_n, k):
-#     '''
-#     From https://stackoverflow.com/questions/64135020/speed-up-random-weighted-choice-without-replacement-in-python
-#     '''
-#     # Get cumulative weights
-#     wc = np.cumsum(np.ones(max_n))
-#     # Total of weights
-#     m = wc[-1]
-#     # Arrays of sample and sampled indices
-#     sample_idx = np.full(k, -1, dtype=np.int64)
-#     # Sampling loop
-#     i = 0
-#     while i < k:
-#         # Pick random weight value
-#         r = m * np.random.rand()
-#         # Get corresponding index
-#         idx = np.searchsorted(wc, r, side='right')
-#         # Check index was not selected before
-#         # If not using Numba you can just do `np.isin(idx, sample_idx)`
-#         found = False
-#         for j in range(i): # CK: could do this loop only at the end
-#             if sample_idx[j] == idx:
-#                 found = True
-#                 continue
-#         # Save sampled value and index
-#         if not found:
-#             sample_idx[i] = idx
-#             i += 1
-        
-#     return sample_idx
 
 
 #%% Simple array operations
