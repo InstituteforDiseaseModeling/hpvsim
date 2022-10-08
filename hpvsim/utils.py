@@ -134,7 +134,7 @@ def compute_infections(betas,          targets, min_var=min_var):
     # Determine transmissions
     if min_var:
         n = randround(betas.sum())
-        if n > 0:
+        if 0:#n > 0:
             transmissions = numba_choice(betas, n)
         else:
             transmissions = np.full(0, 0, dtype=np.int64)
