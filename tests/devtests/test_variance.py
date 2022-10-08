@@ -10,11 +10,11 @@ base_pars = dict(
     verbose = -1,
 )
 
-offset = 100
+offset = 0
 p = sc.objdict(
     minvars = [0, 1],
     popsizes = [10e3, 40e3],
-    repeats = 100,
+    repeats = 20,
 )
 
 T = sc.timer()
