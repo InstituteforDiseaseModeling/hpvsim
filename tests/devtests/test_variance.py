@@ -10,11 +10,11 @@ base_pars = dict(
     verbose = -1,
 )
 
-offset = 0
+offset = 100
 p = sc.objdict(
     minvars = [0, 1],
     popsizes = [10e3, 40e3],
-    repeats = 10,
+    repeats = 100,
 )
 
 T = sc.timer()
@@ -43,7 +43,7 @@ for sim in allsims:
     
 df = sc.dataframe(d)
 
-g = df.groupby(by=['minvar','n_agents'])
+g = df.groupby(by=['n_agents', 'minvar'])
 mean = g.mean()
 std = g.std()
 res = std/mean
