@@ -136,7 +136,7 @@ def compute_infections(betas,          targets, min_var=min_var):
     Compute who infects whom
     '''
     # Determine transmissions
-    if 0:#min_var:
+    if min_var:
         k = randround(betas.sum())
         if k > 0:
             transmissions = nb_choice(len(betas), k, weights=betas)
