@@ -536,21 +536,20 @@ def sample(dist=None, par1=None, par2=None, size=None, **kwargs):
     if min_var == 2:
         if dist in ['unif', 'uniform']: 
             val = (par1 + par2)/2
-        elif dist in ['norm', 'normal', 'normal_pos', 'normal_int', 'poisson', 'neg_binomial']:
+        elif dist in ['norm', 'normal', 'normal_pos', 'normal_int', 'poisson', 'neg_binomial', 'lognorm', 'lognormal', 'lognorm_int', 'lognormal_int']:
             val = par1
         elif dist == 'beta':
             val = par1/(par1+par2)
         elif dist == 'gamma':
             val = par1*par2
-        elif dist in ['lognorm', 'lognormal', 'lognorm_int', 'lognormal_int']:
-            val = np.log(par1**2 / np.sqrt(par2**2 + par1**2)) # Copied from below
         else:
             errormsg = f'The selected distribution "{dist}" is not implemented; choices are: {sc.newlinejoin(choices)}'
             raise NotImplementedError(errormsg)
-        
+    
         samples = np.full(size, fill_value=val)
             
     # Use cached distributions and Sobol sampling
+    # if 0:
     elif min_var == 1:
         pass
     
@@ -580,6 +579,8 @@ def sample(dist=None, par1=None, par2=None, size=None, **kwargs):
         else:
             errormsg = f'The selected distribution "{dist}" is not implemented; choices are: {sc.newlinejoin(choices)}'
             raise NotImplementedError(errormsg)
+            
+        # print(f'{dist}, {par1}, {par2}, {size} -- {samples.mean():0.2f}, {fixed_mean.mean():0.2f}')
 
     return samples
 
