@@ -47,7 +47,7 @@ for minvar in p.minvars:
                 sims.append(sim)
     msim = hpv.MultiSim(sims)
     T.tic()
-    msim.run()
+    msim.run(keep_people=True)
     allsims += msim.sims
     T.toc(f'minvar={minvar}')
 
