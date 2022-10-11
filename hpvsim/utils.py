@@ -531,29 +531,55 @@ def sample(dist=None, par1=None, par2=None, size=None, **kwargs):
     # Ensure it's an integer
     if size is not None:
         size = int(size)
-
-    # Compute distribution parameters and draw samples
-    # NB, if adding a new distribution, also add to choices above
-    if   dist in ['unif', 'uniform']: samples = np.random.uniform(low=par1, high=par2, size=size, **kwargs)
-    elif dist in ['norm', 'normal']:  samples = np.random.normal(loc=par1, scale=par2, size=size, **kwargs)
-    elif dist == 'normal_pos':        samples = np.abs(np.random.normal(loc=par1, scale=par2, size=size, **kwargs))
-    elif dist == 'normal_int':        samples = np.round(np.abs(np.random.normal(loc=par1, scale=par2, size=size, **kwargs)))
-    elif dist == 'poisson':           samples = n_poisson(rate=par1, n=size, **kwargs) # Use Numba version below for speed
-    elif dist == 'neg_binomial':      samples = n_neg_binomial(rate=par1, dispersion=par2, n=size, **kwargs) # Use custom version below
-    elif dist == 'beta':              samples = np.random.beta(a=par1, b=par2, size=size, **kwargs)
-    elif dist == 'gamma':             samples = np.random.gamma(shape=par1, scale=par2, size=size, **kwargs)
-    elif dist in ['lognorm', 'lognormal', 'lognorm_int', 'lognormal_int']:
-        if (sc.isnumber(par1) and par1>0) or (sc.checktype(par1,'arraylike') and (par1>0).all()):
-            mean  = np.log(par1**2 / np.sqrt(par2**2 + par1**2)) # Computes the mean of the underlying normal distribution
-            sigma = np.sqrt(np.log(par2**2/par1**2 + 1)) # Computes sigma for the underlying normal distribution
-            samples = np.random.lognormal(mean=mean, sigma=sigma, size=size, **kwargs)
+    
+    # Absolutely minimum variance -- just use the mean
+    if min_var == 2:
+        if dist in ['unif', 'uniform']: 
+            val = (par1 + par2)/2
+        elif dist in ['norm', 'normal', 'normal_pos', 'normal_int', 'poisson', 'neg_binomial']:
+            val = par1
+        elif dist == 'beta':
+            val = par1/(par1+par2)
+        elif dist == 'gamma':
+            val = par1*par2
+        elif dist in ['lognorm', 'lognormal', 'lognorm_int', 'lognormal_int']:
+            val = np.log(par1**2 / np.sqrt(par2**2 + par1**2)) # Copied from below
         else:
-            samples = np.zeros(size)
-        if '_int' in dist:
-            samples = np.round(samples)
+            errormsg = f'The selected distribution "{dist}" is not implemented; choices are: {sc.newlinejoin(choices)}'
+            raise NotImplementedError(errormsg)
+        
+        samples = np.full(size, fill_value=val)
+            
+    # Use cached distributions and Sobol sampling
+    elif min_var == 1:
+        pass
+    
+    # Normal variance
     else:
-        errormsg = f'The selected distribution "{dist}" is not implemented; choices are: {sc.newlinejoin(choices)}'
-        raise NotImplementedError(errormsg)
+        
+
+        # Compute distribution parameters and draw samples
+        # NB, if adding a new distribution, also add to choices above
+        if   dist in ['unif', 'uniform']: samples = np.random.uniform(low=par1, high=par2, size=size, **kwargs)
+        elif dist in ['norm', 'normal']:  samples = np.random.normal(loc=par1, scale=par2, size=size, **kwargs)
+        elif dist == 'normal_pos':        samples = np.abs(np.random.normal(loc=par1, scale=par2, size=size, **kwargs))
+        elif dist == 'normal_int':        samples = np.round(np.abs(np.random.normal(loc=par1, scale=par2, size=size, **kwargs)))
+        elif dist == 'poisson':           samples = n_poisson(rate=par1, n=size, **kwargs) # Use Numba version below for speed
+        elif dist == 'neg_binomial':      samples = n_neg_binomial(rate=par1, dispersion=par2, n=size, **kwargs) # Use custom version below
+        elif dist == 'beta':              samples = np.random.beta(a=par1, b=par2, size=size, **kwargs)
+        elif dist == 'gamma':             samples = np.random.gamma(shape=par1, scale=par2, size=size, **kwargs)
+        elif dist in ['lognorm', 'lognormal', 'lognorm_int', 'lognormal_int']:
+            if (sc.isnumber(par1) and par1>0) or (sc.checktype(par1,'arraylike') and (par1>0).all()):
+                mean  = np.log(par1**2 / np.sqrt(par2**2 + par1**2)) # Computes the mean of the underlying normal distribution
+                sigma = np.sqrt(np.log(par2**2/par1**2 + 1)) # Computes sigma for the underlying normal distribution
+                samples = np.random.lognormal(mean=mean, sigma=sigma, size=size, **kwargs)
+            else:
+                samples = np.zeros(size)
+            if '_int' in dist:
+                samples = np.round(samples)
+        else:
+            errormsg = f'The selected distribution "{dist}" is not implemented; choices are: {sc.newlinejoin(choices)}'
+            raise NotImplementedError(errormsg)
 
     return samples
 
