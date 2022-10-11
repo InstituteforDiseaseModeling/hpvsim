@@ -474,12 +474,9 @@ def sample(dist=None, par1=None, par2=None, size=None, **kwargs):
     Draw a sample from the distribution specified by the input. The available
     distributions are:
 
-    - 'uniform'       : uniform distribution from low=par1 to high=par2; mean is equal to (par1+par2)/2
     - 'normal'        : normal distribution with mean=par1 and std=par2
     - 'lognormal'     : lognormal distribution with mean=par1 and std=par2 (parameters are for the lognormal distribution, *not* the underlying normal distribution)
     - 'normal_pos'    : right-sided normal distribution (i.e. only positive values), with mean=par1 and std=par2 *of the underlying normal distribution*
-    - 'normal_int'    : normal distribution with mean=par1 and std=par2, returns only integer values
-    - 'lognormal_int' : lognormal distribution with mean=par1 and std=par2, returns only integer values
     - 'poisson'       : Poisson distribution with rate=par1 (par2 is not used); mean and variance are equal to par1
     - 'neg_binomial'  : negative binomial distribution with mean=par1 and k=par2; converges to Poisson with k=∞
     - 'beta'          : beta distribution with alpha=par1 and beta=par2;
@@ -516,16 +513,13 @@ def sample(dist=None, par1=None, par2=None, size=None, **kwargs):
 
     # Some of these have aliases, but these are the "official" names
     choices = [
-        'uniform',
+        # 'uniform',
         'normal',
         'normal_pos',
-        'normal_int',
         'lognormal',
-        'lognormal_int',
         'poisson',
         'neg_binomial',
         'beta',
-        'gamma',
     ]
 
     # Ensure it's an integer
@@ -537,7 +531,6 @@ def sample(dist=None, par1=None, par2=None, size=None, **kwargs):
     if   dist in ['unif', 'uniform']: samples = np.random.uniform(low=par1, high=par2, size=size, **kwargs)
     elif dist in ['norm', 'normal']:  samples = np.random.normal(loc=par1, scale=par2, size=size, **kwargs)
     elif dist == 'normal_pos':        samples = np.abs(np.random.normal(loc=par1, scale=par2, size=size, **kwargs))
-    elif dist == 'normal_int':        samples = np.round(np.abs(np.random.normal(loc=par1, scale=par2, size=size, **kwargs)))
     elif dist == 'poisson':           samples = n_poisson(rate=par1, n=size, **kwargs) # Use Numba version below for speed
     elif dist == 'neg_binomial':      samples = n_neg_binomial(rate=par1, dispersion=par2, n=size, **kwargs) # Use custom version below
     elif dist == 'beta':              samples = np.random.beta(a=par1, b=par2, size=size, **kwargs)
