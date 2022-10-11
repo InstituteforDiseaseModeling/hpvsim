@@ -14,8 +14,10 @@ base_pars = dict(
 p = sc.objdict(
     minvars = [0, 2],
     popsizes = [10e3, 40e3],
-    repeats = 100,
+    repeats = 10,
     trials = 2,
+    start = 2000,
+    end = 2100,
 )
 
 offset = 1
