@@ -580,7 +580,7 @@ def sample(dist=None, par1=None, par2=None, size=None, **kwargs):
             errormsg = f'The selected distribution "{dist}" is not implemented; choices are: {sc.newlinejoin(choices)}'
             raise NotImplementedError(errormsg)
             
-        # print(f'{dist}, {par1}, {par2}, {size} -- {samples.mean():0.2f}, {fixed_mean.mean():0.2f}')
+    print(f'min_var={min_var} {dist}, {par1}, {par2}, {size} -- {samples.mean():0.2f}')
 
     return samples
 
