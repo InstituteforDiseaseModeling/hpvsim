@@ -439,8 +439,6 @@ def set_cin_grades(people, inds, g, dt):
     people.date_dead_cancer[cancer_inds] = people.date_cancerous[g, cancer_inds] + sc.randround(dur_cancer / dt)
     people.dur_cancer[g, cancer_inds] = dur_cancer
     
-    print('oh', len(max_cin1_inds), len(max_cin2_inds), len(max_cin3_inds), len(cancer_inds))
-
     return
 
 
@@ -592,10 +590,10 @@ def sample(dist=None, par1=None, par2=None, size=None, **kwargs):
             errormsg = f'The selected distribution "{dist}" is not implemented; choices are: {sc.newlinejoin(choices)}'
             raise NotImplementedError(errormsg)
             
-    if len(samples) and dist=='lognormal':
-        print(f'min_var={min_var} {dist}, {par1}, {par2}, {size} -- {samples.mean():0.2f}, {samples.max():0.2f}')
-        row = [par1, par2, samples.mean(), samples.max()]
-        sample_data.append(row)
+    # if len(samples) and dist=='lognormal':
+    #     print(f'min_var={min_var} {dist}, {par1}, {par2}, {size} -- {samples.mean():0.2f}, {samples.max():0.2f}')
+    #     row = [par1, par2, samples.mean(), samples.max()]
+    #     sample_data.append(row)
 
     return samples
 
