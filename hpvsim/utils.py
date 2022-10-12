@@ -438,6 +438,8 @@ def set_cin_grades(people, inds, g, dt):
     dur_cancer = sample(**people.pars['dur_cancer'], size=len(cancer_inds))
     people.date_dead_cancer[cancer_inds] = people.date_cancerous[g, cancer_inds] + sc.randround(dur_cancer / dt)
     people.dur_cancer[g, cancer_inds] = dur_cancer
+    
+    print('oh', len(max_cin1_inds), len(max_cin2_inds), len(max_cin3_inds), len(cancer_inds))
 
     return
 
@@ -468,6 +470,8 @@ def set_HIV_prognoses(people, inds, year=None):
 
 __all__ += ['sample', 'get_pdf', 'set_seed']
 
+
+sample_data = []
 
 def sample(dist=None, par1=None, par2=None, size=None, **kwargs):
     '''
@@ -527,26 +531,33 @@ def sample(dist=None, par1=None, par2=None, size=None, **kwargs):
         'beta',
         'gamma',
     ]
+    
+    # if par1 > 1.158 and par1 < 1.159:
+    #     import traceback; traceback.print_exc(); import pdb; pdb.set_trace()
 
     # Ensure it's an integer
     if size is not None:
         size = int(size)
     
     # Absolutely minimum variance -- just use the mean
+    samples = None
     if min_var == 2:
-        if dist in ['unif', 'uniform']: 
-            val = (par1 + par2)/2
-        elif dist in ['norm', 'normal', 'normal_pos', 'normal_int', 'poisson', 'neg_binomial', 'lognorm', 'lognormal', 'lognorm_int', 'lognormal_int']:
-            val = par1
-        elif dist == 'beta':
-            val = par1/(par1+par2)
-        elif dist == 'gamma':
-            val = par1*par2
-        else:
-            errormsg = f'The selected distribution "{dist}" is not implemented; choices are: {sc.newlinejoin(choices)}'
-            raise NotImplementedError(errormsg)
-    
-        samples = np.full(size, fill_value=val)
+        try:
+            if dist in ['unif', 'uniform']: 
+                val = (par1 + par2)/2
+            elif dist in ['norm', 'normal', 'normal_pos', 'normal_int', 'poisson', 'neg_binomial', 'lognorm', 'lognormal']:#, 'lognorm_int', 'lognormal_int']:
+                val = par1
+            elif dist == 'beta':
+                val = par1/(par1+par2)
+            elif dist == 'gamma':
+                val = par1*par2
+            else:
+                errormsg = f'The selected distribution "{dist}" is not implemented; choices are: {sc.newlinejoin(choices)}'
+                raise NotImplementedError(errormsg)
+        
+            samples = np.full(size, fill_value=val)
+        except:
+            samples = None
             
     # Use cached distributions and Sobol sampling
     # if 0:
@@ -554,7 +565,8 @@ def sample(dist=None, par1=None, par2=None, size=None, **kwargs):
         pass
     
     # Normal variance
-    else:
+    if samples is None:
+    # else:
         
 
         # Compute distribution parameters and draw samples
@@ -580,7 +592,10 @@ def sample(dist=None, par1=None, par2=None, size=None, **kwargs):
             errormsg = f'The selected distribution "{dist}" is not implemented; choices are: {sc.newlinejoin(choices)}'
             raise NotImplementedError(errormsg)
             
-    print(f'min_var={min_var} {dist}, {par1}, {par2}, {size} -- {samples.mean():0.2f}')
+    if len(samples) and dist=='lognormal':
+        print(f'min_var={min_var} {dist}, {par1}, {par2}, {size} -- {samples.mean():0.2f}, {samples.max():0.2f}')
+        row = [par1, par2, samples.mean(), samples.max()]
+        sample_data.append(row)
 
     return samples
 

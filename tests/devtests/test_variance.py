@@ -7,7 +7,7 @@ import sciris as sc
 import hpvsim as hpv
 
 base_pars = dict(
-    genotypes = [16],
+    # genotypes = [16],
     verbose = -1,
 )
 
@@ -18,22 +18,24 @@ p = sc.objdict(
     trials = 2,
     start = 1950,
     end = 2050,
+    # dur_cin1_clear = dict(dist='lognormal', par1=10.5, par2=0.5),
+    # dur_cin2_clear = dict(dist='lognormal', par1=11.0, par2=0.5),
+    # dur_cin3_clear = dict(dist='lognormal', par1=11.5, par2=0.5),
 )
 
-offset = 1
+offset = 0
 randval = np.random.randint(1e5)
 
 
 if __name__ == '__main__':
     
-
     T = sc.timer()
     
-    ppl = dict()
-    for popsize in p.popsizes:
-        sim = hpv.Sim(**base_pars, n_agents=popsize)
-        sim.initialize()
-        ppl[popsize] = sim.people
+    # ppl = dict()
+    # for popsize in p.popsizes:
+    #     sim = hpv.Sim(**base_pars, n_agents=popsize)
+    #     sim.initialize()
+    #     ppl[popsize] = sim.people
     
     allsims = []
     for minvar in p.minvars:
@@ -44,9 +46,11 @@ if __name__ == '__main__':
             for popsize in p.popsizes:
                 label = f'minvar{minvar}_popsize{popsize}_trial{trial}'
                 for r in range(p.repeats):
-                    pars = dict(n_agents=popsize, rand_seed=r+offset*(trial+1)*randval)
+                    pars = dict(n_agents=popsize, rand_seed=r+trial*p.repeats+offset*randval)
                     sim = hpv.Sim(**base_pars, **pars, label=f'{label}_r{r}')
-                    sim.people = ppl[popsize]
+                    # sim.initialize()
+                    # sim['genotype_pars']['hpv16']['dur_dysp']  = dict(dist='lognormal', par1=40.5, par2=4.0)
+                    # sim.people = ppl[popsize]
                     sim.info = sc.objdict(minvar=minvar, trial=trial, **pars)
                     sims.append(sim)
         msim = hpv.MultiSim(sims)
